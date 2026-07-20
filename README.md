@@ -41,6 +41,57 @@ This is what a standard authentication form button looks like:
 
 ---
 
+## Consent Flow
+
+The plugin behavior depends on the **Require consent** setting.
+
+### ✅ Require consent = No
+
+Users are registered and logged in immediately after successful Google authentication.
+
+```text
+Google OAuth
+      ↓
+Create Joomla user
+      ↓
+Create Community Builder profile
+      ↓
+Log in
+```
+
+The user is immediately created in the Joomla database and Community Builder.
+
+---
+
+### ✅ Require consent = Yes
+
+Users must accept the Privacy Policy and/or User Agreement before their account is created.
+
+```text
+Google OAuth
+      ↓
+Display Consent Dialog
+      ↓
+      ┌──────────────────────┐
+      │                      │
+   Accept                 Close
+      │                      │
+      ▼                      ▼
+Create Joomla user      Do not create user
+Create CB profile       Return to the website
+Log in
+```
+
+If the user closes the consent dialog or declines to continue:
+
+- No Joomla user is created.
+- No Community Builder profile is created.
+- No personal data is stored.
+
+The account is created **only after the user explicitly accepts the consent dialog**.
+
+---
+
 ## Requirements
 
 * Joomla **4.x** / **5.x** / **6.x** (Ready)
