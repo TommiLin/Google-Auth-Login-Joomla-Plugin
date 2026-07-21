@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension type="plugin" group="system" method="upgrade">
+    <name>PLG_SYSTEM_GOOGLEAUTH</name>
+    <element>googleauth</element>
+    <version>1.0.3</version>
+    <creationDate>July 2026</creationDate>
+    <author>Tomilin Serhii</author>
+    <copyright>Copyright (C) 2026 Tomilin Serhii. All rights reserved.</copyright>
+    <license>GNU General Public License v2 or later</license>
+    <description>PLG_SYSTEM_GOOGLEAUTH_XML_DESCRIPTION</description>
+
+    <namespace path="src">Joomla\Plugin\System\Googleauth</namespace>
+
+    <files>
+        <folder plugin="googleauth">services</folder>
+        <folder>src</folder>
+        <folder>language</folder>
+    </files>
+
+    <languages folder="language">
+        <language tag="en-GB">en-GB/plg_system_googleauth.ini</language>
+        <language tag="en-GB">en-GB/plg_system_googleauth.sys.ini</language>
+        <language tag="uk-UA">uk-UA/plg_system_googleauth.ini</language>
+        <language tag="uk-UA">uk-UA/plg_system_googleauth.sys.ini</language>
+        <language tag="ru-RU">ru-RU/plg_system_googleauth.ini</language>
+        <language tag="ru-RU">ru-RU/plg_system_googleauth.sys.ini</language>
+    </languages>
+
+    <config>
+    <fields name="params">
+
+        <fieldset name="basic" label="PLG_SYSTEM_GOOGLEAUTH_FIELDSET_BASIC">
+
+            <field
+                name="client_id"
+                type="text"
+                label="PLG_SYSTEM_GOOGLEAUTH_FIELD_CLIENT_ID_LABEL" />
+
+            <field
+                name="client_secret"
+                type="password"
+                label="PLG_SYSTEM_GOOGLEAUTH_FIELD_CLIENT_SECRET_LABEL" />
+
+        </fieldset>
+
+        <fieldset
+            name="privacy"
+            label="PLG_SYSTEM_GOOGLEAUTH_FIELDSET_PRIVACY">
+
+            <field
+                name="require_consent"
+                type="radio"
+                label="PLG_SYSTEM_GOOGLEAUTH_REQUIRE_CONSENT_LABEL"
+                description="PLG_SYSTEM_GOOGLEAUTH_REQUIRE_CONSENT_DESC"
+                default="1"
+                layout="joomla.form.field.radio.switcher">
+
+                 <option value="0">JNO</option>
+                 <option value="1">JYES</option>
+
+            </field>
+
+            <field
+                name="privacy_link"
+                type="url"
+                label="PLG_SYSTEM_GOOGLEAUTH_FIELD_PRIVACY_LINK_LABEL" />
+
+            <field
+                name="terms_link"
+                type="url"
+                label="PLG_SYSTEM_GOOGLEAUTH_FIELD_TERMS_LINK_LABEL" />
+
+        </fieldset>
+
+    </fields>
+</config>
+</extension>
