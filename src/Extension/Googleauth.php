@@ -72,7 +72,7 @@ class Googleauth extends CMSPlugin implements SubscriberInterface
         }
 
         $body = $app->getBody();
-        $formPattern = '#(<form[^>]*(?:cbLoginForm|mod-login|login-form|com_comprofiler)[^>]*>.*?</form>)#is';
+        $formPattern = '#(<form[^>]*(?:cbLoginForm|mod-login|login-form|com_comprofiler|jrForm)[^>]*>.*?</form>)#is';
 
         if (!preg_match($formPattern, $body, $formMatches)) {
             return;
@@ -111,7 +111,7 @@ class Googleauth extends CMSPlugin implements SubscriberInterface
              . '</a></div>';
 
     $loginFormHtml = $formMatches[1];
-    $submitPattern = '#(<div[^>]*(?:submit|control-group|actions)[^>]*>.*?</div>)#is';
+    $submitPattern = '#(<div[^>]*(?:submit|control-group|actions|fwd-justify-end)[^>]*>.*?</div>)#is';
     $fixedLoginFormHtml = preg_match($submitPattern, $loginFormHtml, $match)
     ? str_replace($match[1], $match[1] . $buttonHtml, $loginFormHtml)
     : preg_replace('#</form>#i', $buttonHtml . '</form>', $loginFormHtml, 1);
@@ -238,11 +238,17 @@ class Googleauth extends CMSPlugin implements SubscriberInterface
     private function findOrCreateUser(string $email, string $name, string $googleId, string $avatarUrl = ''): ?array
     {
         $user = $this->findUserByGoogleId($googleId);
-        if ($user !== null) {
-            $this->syncCommunityBuilderUser((int) $user->id, $avatarUrl);
-            return ['user' => $user,
-             'requiresConsent' => (bool) $this->params->get('require_consent', 1)];
-        }
+
+if ($user !== null) {
+    $this->syncCommunityBuilderUser((int) $user->id, $avatarUrl);
+
+    return [
+        'user' => $user,
+        'requiresConsent' =>
+            (bool) $this->params->get('require_consent', 1)
+            && !$this->hasAcceptedTerms($user),
+    ];
+}
 
         $user = $this->findUserByEmail($email);
         if ($user !== null) {
@@ -255,9 +261,11 @@ class Googleauth extends CMSPlugin implements SubscriberInterface
             if (!$this->hasAcceptedTerms($user)) {
                 $this->syncCommunityBuilderUser((int) $user->id, $avatarUrl);
                 return [
-                    'user' => $user,
-                    'requiresConsent' => (bool) $this->params->get('require_consent', 1),
-                ];
+              'user' => $user,
+                 'requiresConsent' =>
+                  (bool) $this->params->get('require_consent', 1)
+                 && !$this->hasAcceptedTerms($user),
+];
             }
 
             $user->setParam(self::GOOGLE_SUB_PARAM, $googleId);
