@@ -2,7 +2,7 @@
 <extension type="plugin" group="system" method="upgrade">
     <name>PLG_SYSTEM_GOOGLEAUTH</name>
     <element>googleauth</element>
-    <version>1.0.3</version>
+    <version>1.5.1</version>
     <creationDate>July 2026</creationDate>
     <author>Tomilin Serhii</author>
     <copyright>Copyright (C) 2026 Tomilin Serhii. All rights reserved.</copyright>
@@ -10,6 +10,13 @@
     <description>PLG_SYSTEM_GOOGLEAUTH_XML_DESCRIPTION</description>
 
     <namespace path="src">Joomla\Plugin\System\Googleauth</namespace>
+
+        <updateservers>
+        <server type="extension" priority="1" name="Google Auth Plugin Updates">
+            https://raw.githubusercontent.com/TommiLin/Google-Auth-Login-Joomla-Plugin/main/updates.xml
+        </server>
+    </updateservers>
+</extension>
 
     <files>
         <folder plugin="googleauth">services</folder>
