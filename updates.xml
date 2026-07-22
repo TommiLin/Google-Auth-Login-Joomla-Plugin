@@ -12,12 +12,12 @@
         </infourl>
         <downloads>
             <downloadurl type="full" format="zip">
-                https://github.com/TommiLin/Google-Auth-Login-Joomla-Plugin/releases/download/v1.5.1/Google_Auth_Login-by-TommiLin.zip
+                https://github.com/TommiLin/Google-Auth-Login-Joomla-Plugin/releases/download/v1.5.1/Google-Auth-Login-by-TommiLin-1.5.1.zip
             </downloadurl>
         </downloads>
         <targetplatform name="joomla" version="[4|5].[0-9].*" regexp="1"/>
         <maintainer>TommiLin</maintainer>
         <maintainerurl>https://github.com/TommiLin</maintainerurl>
-        <sha256>b052140cf584a8982d1c8453d6092787bd8dee765cbc5947f1e9adf7d224dab1</sha256>
+        <sha256>1d12b247f3b6368099acbdddc3f4ab5e2be626c661999bc82ce5a8ea1d50f065</sha256>
     </update>
 </updates>
