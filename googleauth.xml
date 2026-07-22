@@ -11,13 +11,6 @@
 
     <namespace path="src">Joomla\Plugin\System\Googleauth</namespace>
 
-        <updateservers>
-        <server type="extension" priority="1" name="Google Auth Plugin Updates">
-            https://raw.githubusercontent.com/TommiLin/Google-Auth-Login-Joomla-Plugin/main/updates.xml
-        </server>
-    </updateservers>
-</extension>
-
     <files>
         <folder plugin="googleauth">services</folder>
         <folder>src</folder>
@@ -34,51 +27,50 @@
     </languages>
 
     <config>
-    <fields name="params">
+        <fields name="params">
+            <fieldset name="basic" label="PLG_SYSTEM_GOOGLEAUTH_FIELDSET_BASIC">
+                <field
+                    name="client_id"
+                    type="text"
+                    label="PLG_SYSTEM_GOOGLEAUTH_FIELD_CLIENT_ID_LABEL" />
 
-        <fieldset name="basic" label="PLG_SYSTEM_GOOGLEAUTH_FIELDSET_BASIC">
+                <field
+                    name="client_secret"
+                    type="password"
+                    label="PLG_SYSTEM_GOOGLEAUTH_FIELD_CLIENT_SECRET_LABEL" />
+            </fieldset>
 
-            <field
-                name="client_id"
-                type="text"
-                label="PLG_SYSTEM_GOOGLEAUTH_FIELD_CLIENT_ID_LABEL" />
+            <fieldset
+                name="privacy"
+                label="PLG_SYSTEM_GOOGLEAUTH_FIELDSET_PRIVACY">
 
-            <field
-                name="client_secret"
-                type="password"
-                label="PLG_SYSTEM_GOOGLEAUTH_FIELD_CLIENT_SECRET_LABEL" />
+                <field
+                    name="require_consent"
+                    type="radio"
+                    label="PLG_SYSTEM_GOOGLEAUTH_REQUIRE_CONSENT_LABEL"
+                    description="PLG_SYSTEM_GOOGLEAUTH_REQUIRE_CONSENT_DESC"
+                    default="1"
+                    layout="joomla.form.field.radio.switcher">
+                     <option value="0">JNO</option>
+                     <option value="1">JYES</option>
+                </field>
 
-        </fieldset>
+                <field
+                    name="privacy_link"
+                    type="url"
+                    label="PLG_SYSTEM_GOOGLEAUTH_FIELD_PRIVACY_LINK_LABEL" />
 
-        <fieldset
-            name="privacy"
-            label="PLG_SYSTEM_GOOGLEAUTH_FIELDSET_PRIVACY">
+                <field
+                    name="terms_link"
+                    type="url"
+                    label="PLG_SYSTEM_GOOGLEAUTH_FIELD_TERMS_LINK_LABEL" />
+            </fieldset>
+        </fields>
+    </config>
 
-            <field
-                name="require_consent"
-                type="radio"
-                label="PLG_SYSTEM_GOOGLEAUTH_REQUIRE_CONSENT_LABEL"
-                description="PLG_SYSTEM_GOOGLEAUTH_REQUIRE_CONSENT_DESC"
-                default="1"
-                layout="joomla.form.field.radio.switcher">
-
-                 <option value="0">JNO</option>
-                 <option value="1">JYES</option>
-
-            </field>
-
-            <field
-                name="privacy_link"
-                type="url"
-                label="PLG_SYSTEM_GOOGLEAUTH_FIELD_PRIVACY_LINK_LABEL" />
-
-            <field
-                name="terms_link"
-                type="url"
-                label="PLG_SYSTEM_GOOGLEAUTH_FIELD_TERMS_LINK_LABEL" />
-
-        </fieldset>
-
-    </fields>
-</config>
+    <updateservers>
+        <server type="extension" priority="1" name="Google Auth Plugin Updates">
+            https://raw.githubusercontent.com/TommiLin/Google-Auth-Login-Joomla-Plugin/main/updates.xml
+        </server>
+    </updateservers>
 </extension>
