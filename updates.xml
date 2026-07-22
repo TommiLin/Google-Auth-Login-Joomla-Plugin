@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<updates>
+    <update>
+        <name>System - Google Auth with Terms by TommiLin</name>
+        <description>System plugin for Google Authentication with mandatory terms of service acceptance and Community Builder integration</description>
+        <element>googleauth</element>
+        <type>plugin</type>
+        <folder>system</folder>
+        <version>1.5.1</version>
+        <infourl title="GitHub">
+           https://github.com/TommiLin/Google-Auth-Login-Joomla-Plugin/releases
+        </infourl>
+        <downloads>
+            <downloadurl type="full" format="zip">
+                https://github.com/TommiLin/Google-Auth-Login-Joomla-Plugin/releases/download/v1.5.1/Google_Auth_Login-by-TommiLin.zip
+            </downloadurl>
+        </downloads>
+        <targetplatform name="joomla" version="[4|5].[0-9].*" regexp="1"/>
+        <maintainer>TommiLin</maintainer>
+        <maintainerurl>https://github.com/TommiLin</maintainerurl>
+        <sha256>b052140cf584a8982d1c8453d6092787bd8dee765cbc5947f1e9adf7d224dab1</sha256>
+    </update>
+</updates>
