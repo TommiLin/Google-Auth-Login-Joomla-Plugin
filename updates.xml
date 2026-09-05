@@ -15,6 +15,5 @@
         <targetplatform name="joomla" version="5.*"/>
         <maintainer>TommiLin</maintainer>
         <maintainerurl>https://github.com/TommiLin</maintainerurl>
-        <sha256>7c905056163227d44938b6e50a4781c5f4a5371900147fb98142db23785824c5</sha256>
     </update>
 </updates>
