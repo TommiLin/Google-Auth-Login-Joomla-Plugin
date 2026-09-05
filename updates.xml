@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <updates>
     <update>
-        <name>System - Google Auth with Terms by TommiLin</name>
+        <name>googleauth</name>
         <description>System plugin for Google Authentication with mandatory terms of service acceptance and Community Builder integration</description>
         <element>googleauth</element>
         <type>plugin</type>
