@@ -6,7 +6,7 @@
         <element>googleauth</element>
         <type>plugin</type>
         <folder>system</folder>
-        <version>1.6.1</version>
+        <version>2.6.1</version>
         <infourl title="GitHub">
            https://github.com/TommiLin/Google-Auth-Login-Joomla-Plugin/releases
         </infourl>
