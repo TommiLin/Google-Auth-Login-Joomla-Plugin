@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <updates>
     <update>
-        <name>System - Google Auth Login</name>
+        <name>PLG_SYSTEM_GOOGLEAUTH</name>
         <description>Google Auth Login Plugin for Joomla</description>
         <element>googleauth</element>
         <type>plugin</type>
@@ -11,6 +11,6 @@
         <downloads>
             <downloadurl type="full" format="zip">https://github.com/ваш-user/ваш-repo/releases/download/v1.6.2/plg_system_googleauth_v1.6.2.zip</downloadurl>
         </downloads>
-        <targetplatform name="joomla" version="[45]\..*"/>
+        <targetplatform name="joomla" version=".*"/>
     </update>
 </updates>
