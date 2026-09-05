@@ -13,6 +13,7 @@
         </downloads>
         <targetplatform name="joomla" version="4.*"/>
         <targetplatform name="joomla" version="5.*"/>
+        <targetplatform name="joomla" version="6.*"/>
         <maintainer>TommiLin</maintainer>
         <maintainerurl>https://github.com/TommiLin</maintainerurl>
     </update>
