@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <updates>
     <update>
-        <name>PLG_SYSTEM_GOOGLEAUTH</name>
+        <name>System - Google Auth Login by TommiLin</name>
         <description>System plugin for Google Authentication with mandatory terms of service acceptance and Community Builder integration</description>
         <element>googleauth</element>
         <type>plugin</type>
