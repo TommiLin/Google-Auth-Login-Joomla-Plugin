@@ -56,6 +56,17 @@
                 </field>
 
                 <field
+                    name="force_google_consent"
+                    type="radio"
+                    label="PLG_SYSTEM_GOOGLEAUTH_FORCE_GOOGLE_CONSENT_LABEL"
+                    description="PLG_SYSTEM_GOOGLEAUTH_FORCE_GOOGLE_CONSENT_DESC"
+                    default="1"
+                    layout="joomla.form.field.radio.switcher">
+                     <option value="0">JNO</option>
+                     <option value="1">JYES</option>
+                </field>
+
+                <field
                     name="privacy_link"
                     type="url"
                     label="PLG_SYSTEM_GOOGLEAUTH_FIELD_PRIVACY_LINK_LABEL" />
