@@ -11,10 +11,13 @@ namespace Joomla\Plugin\System\Googleauth\Extension;
 
 defined('_JEXEC') or die;
 
+use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Http\HttpFactory;
 use Joomla\CMS\Language\Text;
+use Joomla\CMS\Mail\MailerFactoryInterface;
 use Joomla\CMS\Plugin\CMSPlugin;
+use Joomla\CMS\Router\Route;
 use Joomla\CMS\Uri\Uri;
 use Joomla\CMS\User\User;
 use Joomla\CMS\User\UserFactoryInterface;
@@ -109,7 +112,19 @@ class Googleauth extends CMSPlugin implements SubscriberInterface
 
         $state = bin2hex(random_bytes(32));
         $this->storeOauthState($state);
-        $app->getSession()->set('googleauth.return_url', Uri::current());
+        $app->getSession()->set('googleauth.return_url', Uri::getInstance()->toString(['scheme', 'host', 'port', 'path', 'query']));
+
+        /*
+         * 'select_account' is always kept so the account chooser still
+         * appears. 'consent' additionally forces Google's own permission
+         * screen on every login (re-confirming the requested scopes) and can
+         * be switched off from the plugin's admin settings, independently of
+         * the site's own require_consent (Privacy/Terms) screen.
+         */
+        $promptValues = ['select_account'];
+        if ((bool) $this->params->get('force_google_consent', 1)) {
+            $promptValues[] = 'consent';
+        }
 
         $googleUrl = 'https://accounts.google.com/o/oauth2/v2/auth?' . http_build_query([
             'client_id' => $clientId,
@@ -117,25 +132,76 @@ class Googleauth extends CMSPlugin implements SubscriberInterface
             'response_type' => 'code',
             'scope' => 'openid email profile',
             'state' => $state,
-            'prompt' => 'select_account consent',
+            'prompt' => implode(' ', $promptValues),
         ], '', '&', PHP_QUERY_RFC3986);
 
         $this->loadLanguage();
         $buttonText = Text::_('PLG_SYSTEM_GOOGLEAUTH_LOGIN_BUTTON');
 
-        $buttonHtml = '<div class="google-auth-container" style="flex-basis:100%;width:100%;margin-top:12px;clear:both;">'
-          . '<a href="' . htmlspecialchars($googleUrl, ENT_QUOTES, 'UTF-8') . '" class="google-login-btn" '
-             . 'style="display:flex;align-items:center;justify-content:center;gap:12px;width:100%;min-height:40px;'
-             . 'padding:10px 16px;box-sizing:border-box;'
-             . 'background:#fff;border:1px solid #dadce0;border-radius:4px;'
-             . 'color:#3c4043;text-decoration:none;font:inherit;font-weight:500;line-height:1.4;">'
+        // Color schemes from Google's Sign in with Google branding guidelines
+        // (Supported button modes: Light, Dark, Neutral). The "G" logo keeps its brand colors.
+        $buttonThemes = [
+            'light'   => ['bg' => '#FFFFFF', 'border' => '1px solid #747775', 'color' => '#1F1F1F'],
+            'dark'    => ['bg' => '#131314', 'border' => '1px solid #8E918F', 'color' => '#E3E3E3'],
+            'neutral' => ['bg' => '#F2F2F2', 'border' => '0', 'color' => '#1F1F1F'],
+        ];
+        $buttonTheme = (string) $this->params->get('button_theme', 'light');
+        if (!isset($buttonThemes[$buttonTheme])) {
+            $buttonTheme = 'light';
+        }
+        $themeColors = $buttonThemes[$buttonTheme];
+
+        // Button type / shape (Google's "Supported button modes": standard or icon-only,
+        // pill/round or rectangular/square) and the optional "copy the login form's
+        // submit button style" mode.
+        $isIconOnly = (string) $this->params->get('button_type', 'standard') === 'icon';
+        $isPill = (string) $this->params->get('button_shape', 'rectangular') === 'pill';
+        $matchSubmit = (bool) $this->params->get('match_submit_style', 0);
+
+        $iconAlignMap = ['left' => 'flex-start', 'center' => 'center', 'right' => 'flex-end'];
+        $iconAlign = (string) $this->params->get('icon_align', 'left');
+        if (!isset($iconAlignMap[$iconAlign])) {
+            $iconAlign = 'left';
+        }
+
+        $containerStyle = 'flex-basis:100%;width:100%;margin-top:12px;clear:both;'
+            . ($isIconOnly ? 'display:flex;justify-content:' . $iconAlignMap[$iconAlign] . ';' : '');
+        $matchIconHeight = (bool) $this->params->get('icon_match_height', 1);
+        $containerAttrs = ($matchSubmit ? ' data-match-submit="1"' : '')
+            . ($isIconOnly && $matchIconHeight ? ' data-match-height="1"' : '');
+
+        $layoutStyle = 'display:flex;align-items:center;justify-content:center;gap:12px;box-sizing:border-box;text-decoration:none;';
+
+        if ($matchSubmit) {
+            // Look and hover come from the CSS classes copied from the submit button by the
+            // injected script, so no colors/border/radius/hover rules are applied here.
+            $linkClass = 'google-login-btn-match';
+            // Icon-only: a 40x40 square without the template's side padding (the script makes it
+            // as tall as the submit button when "match icon height" is on).
+            $linkStyle = $layoutStyle . ($isIconOnly ? 'width:40px;height:40px;padding:0;' : 'width:100%;');
+        } else {
+            $linkClass = 'google-login-btn google-login-btn--' . $buttonTheme
+                . ' google-login-btn--' . ($isPill ? 'pill' : 'rectangular');
+            $linkStyle = $layoutStyle
+                . ($isIconOnly ? 'width:40px;height:40px;padding:0;' : 'width:100%;min-height:40px;padding:10px 16px;')
+                . 'background:' . $themeColors['bg'] . ';border:' . $themeColors['border'] . ';'
+                . 'border-radius:' . ($isPill ? '999px' : '4px') . ';'
+                . 'color:' . $themeColors['color'] . ';font:inherit;font-weight:500;line-height:1.4;';
+        }
+
+        $buttonLabel = htmlspecialchars($buttonText, ENT_QUOTES, 'UTF-8');
+
+        $buttonHtml = '<div class="google-auth-container"' . $containerAttrs . ' style="' . $containerStyle . '">'
+          . '<a href="' . htmlspecialchars($googleUrl, ENT_QUOTES, 'UTF-8') . '" class="' . $linkClass . '" '
+             . ($isIconOnly ? 'aria-label="' . $buttonLabel . '" title="' . $buttonLabel . '" ' : '')
+             . 'style="' . $linkStyle . '">'
              . '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="18" height="18" aria-hidden="true">'
              . '<path fill="#EA4335" d="M24 9.5c3.54 0 6.72 1.22 9.22 3.61l6.9-6.9C35.9 2.3 30.4 0 24 0 14.64 0 6.56 5.38 2.56 13.22l8.04 6.24C12.53 13.52 17.8 9.5 24 9.5z"/>'
              . '<path fill="#4285F4" d="M46.98 24.55c0-1.57-.14-3.08-.4-4.55H24v9.09h12.94c-.56 2.98-2.24 5.5-4.77 7.18l7.73 6C44.4 38.1 46.98 31.84 46.98 24.55z"/>'
              . '<path fill="#FBBC05" d="M10.6 28.54A14.5 14.5 0 0 1 9.5 24c0-1.58.39-3.08 1.1-4.54l-8.04-6.24A23.95 13.22 0 0 0 0 24c0 3.87.93 7.52 2.56 10.78l8.04-6.24z"/>'
              . '<path fill="#34A853" d="M24 48c6.48 0 11.92-2.14 15.9-5.82l-7.73-6c-2.15 1.45-4.9 2.32-8.17 2.32-6.2 0-11.47-4.02-13.4-9.46l-8.04 6.24C6.56 42.62 14.64 48 24 48z"/>'
              . '</svg>'
-             . '<span>' . htmlspecialchars($buttonText, ENT_QUOTES, 'UTF-8') . '</span>'
+             . ($isIconOnly ? '' : '<span>' . $buttonLabel . '</span>')
              . '</a></div>';
 
         $buttonJson = json_encode(
@@ -261,7 +327,7 @@ class Googleauth extends CMSPlugin implements SubscriberInterface
             'button[type="submit"], input[type="submit"], button:not([type])'
         );
         const submitBlock = submit && submit.closest(
-            '.control-group, .form-group, .login-button, .jrLoginButton'
+            '.control-group, .form-group, .login-button, .jrLoginButton, .uk-margin'
         );
 
         if (submitBlock && submitBlock !== form) {
@@ -273,6 +339,84 @@ class Googleauth extends CMSPlugin implements SubscriberInterface
         }
     }
 
+    function findSubmit(form) {
+        return form.querySelector(
+            'button[type="submit"], input[type="submit"], button:not([type])'
+        );
+    }
+
+    function matchIconHeight(form, container) {
+        // Icon-only mode (when enabled): make the icon button a square as tall as the form's own submit button.
+        if (!container || container.getAttribute('data-match-height') !== '1') {
+            return;
+        }
+
+        const link = container.querySelector('a');
+        const submit = findSubmit(form);
+
+        if (!link || !submit) {
+            return;
+        }
+
+        const size = Math.round(submit.getBoundingClientRect().height);
+
+        if (size <= 0) {
+            return;
+        }
+
+        const px = size + 'px';
+
+        if (link.style.height !== px) {
+            link.style.width = px;
+            link.style.height = px;
+            link.style.minHeight = '0';
+            link.style.padding = '0';
+        }
+    }
+
+    function matchSubmitStyle(form, container) {
+        // Optional mode: reuse the login form's own submit button classes so the Google button
+        // looks and reacts on hover exactly like the template's button.
+        if (!container || container.getAttribute('data-match-submit') !== '1') {
+            return;
+        }
+
+        const link = container.querySelector('a');
+
+        if (!link || link.getAttribute('data-submit-matched') === '1') {
+            return;
+        }
+
+        const submit = findSubmit(form);
+
+        if (!submit) {
+            return;
+        }
+
+        submit.classList.forEach(function (name) {
+            if (name.indexOf('webauthn') === -1) {
+                link.classList.add(name);
+            }
+        });
+
+        link.setAttribute('data-submit-matched', '1');
+    }
+
+    function matchAllSubmitStyles() {
+        document.querySelectorAll('.google-auth-container').forEach(function (container) {
+            const sibling = container.previousElementSibling;
+            const form = container.closest('form')
+                || (sibling && sibling.tagName === 'FORM' ? sibling : null);
+
+            if (!form) {
+                return;
+            }
+
+            matchSubmitStyle(form, container);
+            matchIconHeight(form, container);
+        });
+    }
+
     function addGoogleButtons() {
         document.querySelectorAll('form').forEach(function (form) {
             if (isJReviewsLoginForm(form)) {
@@ -280,7 +424,23 @@ class Googleauth extends CMSPlugin implements SubscriberInterface
             }
         });
 
-        document.querySelectorAll(standardLoginSelector).forEach(placeStandardLoginButton);
+        const handled = new Set(document.querySelectorAll(standardLoginSelector));
+        handled.forEach(placeStandardLoginButton);
+
+        // Joomla core login forms whose id/class differ from the fixed selectors above
+        // (e.g. YOOtheme/Cassiopeia render id="login-form-16" with no class or name).
+        // Every one of them posts task=user.login, so detect by that hidden field.
+        document.querySelectorAll('form').forEach(function (form) {
+            if (handled.has(form) || isJReviewsLoginForm(form)) {
+                return;
+            }
+
+            if (form.querySelector('input[name="task"][value="user.login"]') !== null) {
+                placeStandardLoginButton(form);
+            }
+        });
+
+        matchAllSubmitStyles();
     }
 
     function start() {
@@ -335,6 +495,44 @@ JS;
             0 3px 6px -2px rgba(60,64,67,.30),
             2px 2px 3px -2px rgba(60,64,67,.18),
             -2px 2px 3px -2px rgba(60,64,67,.18);
+    }
+
+    /* Per-scheme "lift" on hover: same recipe as the base rule (darker side/bottom edges +
+       soft 3-layer shadow), tuned per scheme. A faint light glow is added to every scheme so the
+       effect stays visible on dark page backgrounds, where a dark shadow cannot be seen. */
+    .google-login-btn.google-login-btn--light:hover {
+        border-top-color: #747775 !important;
+        border-right-color: #5F6160 !important;
+        border-bottom-color: #5F6160 !important;
+        border-left-color: #5F6160 !important;
+        box-shadow:
+            0 3px 6px -2px rgba(60,64,67,.30),
+            2px 2px 3px -2px rgba(60,64,67,.18),
+            -2px 2px 3px -2px rgba(60,64,67,.18),
+            0 0 0 1px rgba(255,255,255,.08),
+            0 4px 14px -4px rgba(255,255,255,.30);
+    }
+
+    .google-login-btn.google-login-btn--dark:hover {
+        border-top-color: #8E918F !important;
+        border-right-color: #AEB0AF !important;
+        border-bottom-color: #AEB0AF !important;
+        border-left-color: #AEB0AF !important;
+        box-shadow:
+            0 3px 6px -2px rgba(0,0,0,.65),
+            2px 2px 3px -2px rgba(0,0,0,.45),
+            -2px 2px 3px -2px rgba(0,0,0,.45),
+            0 0 0 1px rgba(255,255,255,.10),
+            0 4px 14px -4px rgba(255,255,255,.32);
+    }
+
+    .google-login-btn.google-login-btn--neutral:hover {
+        box-shadow:
+            0 3px 6px -2px rgba(60,64,67,.40),
+            2px 2px 3px -2px rgba(60,64,67,.25),
+            -2px 2px 3px -2px rgba(60,64,67,.25),
+            0 0 0 1px rgba(255,255,255,.08),
+            0 4px 14px -4px rgba(255,255,255,.30);
     }
 </style>';
 
@@ -474,7 +672,7 @@ JS;
             }
 
             $this->log('info', 'login', 'User #' . $result['user']->id . ' logged in');
-            $this->redirectHome(Text::_('PLG_SYSTEM_GOOGLEAUTH_MSG_SUCCESS'), 'message');
+            $this->redirectAfterLogin(Text::_('PLG_SYSTEM_GOOGLEAUTH_MSG_SUCCESS'), $returnUrl, false);
             return;
         }
 
@@ -511,7 +709,7 @@ JS;
             }
 
             $this->log('info', 'login', 'User #' . $user->id . ' logged in (consent not required)');
-            $this->redirectHome(Text::_('PLG_SYSTEM_GOOGLEAUTH_MSG_SUCCESS'), 'message');
+            $this->redirectAfterLogin(Text::_('PLG_SYSTEM_GOOGLEAUTH_MSG_SUCCESS'), $returnUrl, true);
             return;
         }
 
@@ -616,6 +814,14 @@ JS;
 
         $user = $this->loadUser((int) $user->id);
 
+        // Optional admin notification (plugin params: notify_admins / admin_notify_ids).
+        // Never allowed to break sign-up.
+        try {
+            $this->notifyAdminsAboutNewUser((int) $user->id);
+        } catch (\Throwable $e) {
+            $this->log('error', 'notify_admins', 'Admin notification failed for user #' . $user->id . ': ' . $e->getMessage());
+        }
+
         try {
             $this->syncCommunityBuilderUser((int) $user->id, $data['avatarUrl']);
         } catch (\Throwable $e) {
@@ -624,6 +830,65 @@ JS;
         }
 
         return $user;
+    }
+
+    /**
+     * Emails the configured administrators that a new user registered via Google.
+     * Does nothing unless "notify_admins" is enabled and at least one valid admin
+     * ID (admin_notify_ids, comma/space separated Joomla user IDs) resolves to an
+     * active user with an e-mail address.
+     */
+    private function notifyAdminsAboutNewUser(int $newUserId): void
+    {
+        if (!(bool) $this->params->get('notify_admins', 0)) {
+            return;
+        }
+
+        $rawIds = (string) $this->params->get('admin_notify_ids', '');
+        $ids = array_unique(array_filter(
+            array_map('intval', preg_split('/[\s,;]+/', $rawIds, -1, PREG_SPLIT_NO_EMPTY) ?: []),
+            static fn (int $id): bool => $id > 0 && $id !== $newUserId
+        ));
+
+        if ($ids === []) {
+            $this->log('warning', 'notify_admins', 'Notification enabled but no valid admin IDs are configured');
+            return;
+        }
+
+        $this->loadLanguage();
+        $siteName = (string) $this->getApplication()->get('sitename', '');
+        $subject = Text::sprintf('PLG_SYSTEM_GOOGLEAUTH_NOTIFY_ADMIN_SUBJECT', $siteName);
+        $body = Text::sprintf('PLG_SYSTEM_GOOGLEAUTH_NOTIFY_ADMIN_BODY', $siteName, $newUserId);
+
+        foreach ($ids as $adminId) {
+            $admin = $this->loadUser($adminId);
+
+            if ((int) $admin->id !== $adminId || (int) $admin->block === 1 || !filter_var($admin->email, FILTER_VALIDATE_EMAIL)) {
+                $this->log('warning', 'notify_admins', 'Skipped admin ID ' . $adminId . ' (not found, blocked or no valid e-mail)');
+                continue;
+            }
+
+            try {
+                try {
+                    $mailer = Factory::getContainer()->get(MailerFactoryInterface::class)->createMailer();
+                } catch (\Throwable $e) {
+                    $mailer = Factory::getMailer();
+                }
+
+                $mailer->addRecipient($admin->email, $admin->name);
+                $mailer->setSubject($subject);
+                $mailer->setBody($body);
+                $mailer->isHtml(false);
+
+                if ($mailer->Send() === true) {
+                    $this->log('info', 'notify_admins', 'Notified admin #' . $adminId . ' about new user #' . $newUserId);
+                } else {
+                    $this->log('error', 'notify_admins', 'Mail to admin #' . $adminId . ' was not sent');
+                }
+            } catch (\Throwable $e) {
+                $this->log('error', 'notify_admins', 'Mail to admin #' . $adminId . ' failed: ' . $e->getMessage());
+            }
+        }
     }
 
     private function getDefaultRegisteredGroupId(): int
@@ -794,8 +1059,7 @@ JS;
         }
 
         $this->log('info', 'login', 'User #' . $user->id . ' logged in after consent');
-        $this->getApplication()->enqueueMessage(Text::_('PLG_SYSTEM_GOOGLEAUTH_MSG_CONSENT_SAVED'), 'message');
-        $this->getApplication()->redirect($returnUrl !== '' ? $returnUrl : Uri::root());
+        $this->redirectAfterLogin(Text::_('PLG_SYSTEM_GOOGLEAUTH_MSG_CONSENT_SAVED'), $returnUrl, $isNewUser);
     }
 
     /**
@@ -1460,6 +1724,91 @@ $this->getApplication()->close();
     {
         $this->getApplication()->enqueueMessage($message, $type);
         $this->getApplication()->redirect(Uri::root());
+    }
+
+    /**
+     * Success redirect after a Google login/registration, driven by the plugin's
+     * "After sign-in" / "After first registration" settings.
+     */
+    private function redirectAfterLogin(string $message, string $returnUrl, bool $isNewUser): void
+    {
+        $this->getApplication()->enqueueMessage($message, 'message');
+
+        try {
+            $target = $this->resolveRedirectUrl($returnUrl, $isNewUser);
+        } catch (\Throwable $e) {
+            $this->log('error', 'redirect', 'Could not resolve redirect target: ' . $e->getMessage());
+            $target = Uri::root();
+        }
+
+        $this->getApplication()->redirect($target !== '' ? $target : Uri::root());
+    }
+
+    private function resolveRedirectUrl(string $returnUrl, bool $isNewUser): string
+    {
+        $mode = (string) $this->params->get('redirect_login', 'current');
+        $customUrl = (string) $this->params->get('redirect_login_url', '');
+
+        if ($isNewUser) {
+            $registerMode = (string) $this->params->get('redirect_register', 'same');
+
+            if ($registerMode !== 'same') {
+                $mode = $registerMode;
+                $customUrl = (string) $this->params->get('redirect_register_url', '');
+            }
+        }
+
+        switch ($mode) {
+            case 'home':
+                return Uri::root();
+
+            case 'profile':
+                return $this->getProfileUrl();
+
+            case 'custom':
+                return $this->normalizeCustomUrl($customUrl);
+
+            case 'current':
+            default:
+                // Stay on the page the sign-in started from, but never bounce back to a
+                // login screen or to a foreign host.
+                if ($returnUrl === ''
+                    || !Uri::isInternal($returnUrl)
+                    || preg_match('/[?&]view=login(?:&|$)/', $returnUrl) === 1) {
+                    return Uri::root();
+                }
+
+                return $returnUrl;
+        }
+    }
+
+    /** Community Builder profile if CB is installed and enabled, otherwise the Joomla user profile. */
+    private function getProfileUrl(): string
+    {
+        if ($this->isCommunityBuilderAvailable() && ComponentHelper::isEnabled('com_comprofiler')) {
+            return Route::_('index.php?option=com_comprofiler&view=userprofile', false);
+        }
+
+        return Route::_('index.php?option=com_users&view=profile', false);
+    }
+
+    private function normalizeCustomUrl(string $url): string
+    {
+        $url = trim($url);
+
+        if ($url === '') {
+            return Uri::root();
+        }
+
+        if (preg_match('#^https?://#i', $url) === 1) {
+            return $url;
+        }
+
+        if (str_starts_with($url, 'index.php?')) {
+            return Route::_($url, false);
+        }
+
+        return rtrim(Uri::root(), '/') . '/' . ltrim($url, '/');
     }
 
     /**
