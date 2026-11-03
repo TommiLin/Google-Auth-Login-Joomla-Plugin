@@ -8,12 +8,12 @@
         <folder>system</folder>
         <client>site</client>
         <client_id>0</client_id>
-        <version>1.10.0</version>
+        <version>1.10.1</version>
         <infourl title="GitHub">https://github.com/TommiLin/Google-Auth-Login-Joomla-Plugin/releases</infourl>
         <downloads>
-            <downloadurl type="full" format="zip">https://github.com/TommiLin/Google-Auth-Login-Joomla-Plugin/releases/download/v1.10.0/Google-Auth-Login-Joomla-Plugin-1.10.0.zip</downloadurl>
+            <downloadurl type="full" format="zip">https://github.com/TommiLin/Google-Auth-Login-Joomla-Plugin/releases/download/v1.10.1/Google-Auth-Login-Joomla-Plugin-1.10.1.zip</downloadurl>
         </downloads>
-        <sha256>63c0ad98f58e24f9e8e644ae10ac6a294d7bf0f88580559a2b7d7afaf2534bd0</sha256>
+        <sha256>7072b242e4b3aee181b73ec9dcfe4da62f8bac528d0a788a5aab754adaa89d52</sha256>
         <targetplatform name="joomla" version="(4|5|6)\.[0-9].*" regexp="1"/>
         <maintainer>TommiLin</maintainer>
     </update>
