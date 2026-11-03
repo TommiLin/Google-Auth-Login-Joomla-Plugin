@@ -2,7 +2,7 @@
 <extension type="plugin" group="system" method="upgrade">
     <name>PLG_SYSTEM_GOOGLEAUTH</name>
     <element>googleauth</element>
-    <version>1.10.0</version>
+    <version>1.10.1</version>
     <creationDate>July 2026</creationDate>
     <author>Tomilin Serhii</author>
     <copyright>Copyright (C) 2026 Tomilin Serhii. All rights reserved.</copyright>
@@ -51,6 +51,7 @@
                     description="PLG_SYSTEM_GOOGLEAUTH_BUTTON_THEME_DESC"
                     default="light">
                     <option value="light">PLG_SYSTEM_GOOGLEAUTH_BUTTON_THEME_LIGHT</option>
+                    <option value="classic">PLG_SYSTEM_GOOGLEAUTH_BUTTON_THEME_CLASSIC</option>
                     <option value="dark">PLG_SYSTEM_GOOGLEAUTH_BUTTON_THEME_DARK</option>
                     <option value="neutral">PLG_SYSTEM_GOOGLEAUTH_BUTTON_THEME_NEUTRAL</option>
                 </field>
