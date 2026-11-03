@@ -142,6 +142,9 @@ class Googleauth extends CMSPlugin implements SubscriberInterface
         // (Supported button modes: Light, Dark, Neutral). The "G" logo keeps its brand colors.
         $buttonThemes = [
             'light'   => ['bg' => '#FFFFFF', 'border' => '1px solid #747775', 'color' => '#1F1F1F'],
+            // The look the button had before the guideline schemes: light-gray border and the
+            // original hover (the base .google-login-btn:hover rule, no scheme override).
+            'classic' => ['bg' => '#FFFFFF', 'border' => '1px solid #dadce0', 'color' => '#3c4043'],
             'dark'    => ['bg' => '#131314', 'border' => '1px solid #8E918F', 'color' => '#E3E3E3'],
             'neutral' => ['bg' => '#F2F2F2', 'border' => '0', 'color' => '#1F1F1F'],
         ];
