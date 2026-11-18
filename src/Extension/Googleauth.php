@@ -106,7 +106,11 @@ class Googleauth extends CMSPlugin implements SubscriberInterface
          */
         $loginSurfacePattern = '#(?:<form\b[^>]*(?:cbLoginForm|mod-login|login-form|com_comprofiler|jrForm)[^>]*>|<div\b[^>]*(?:jrLoginBox|jrLoginForm|jr-login-form)[^>]*>)#is';
 
-        if (!preg_match($loginSurfacePattern, $body)) {
+        // Any form that posts the standard Joomla login task (hidden task=user.login) is a login form too:
+        // this covers the component's own login page and templates without the class names above.
+        $loginTaskPattern = '#<input\b[^>]*name=["\']task["\'][^>]*value=["\']user\.login["\'][^>]*>|<input\b[^>]*value=["\']user\.login["\'][^>]*name=["\']task["\'][^>]*>#is';
+
+        if (!preg_match($loginSurfacePattern, $body) && !preg_match($loginTaskPattern, $body)) {
             return;
         }
 
@@ -1360,7 +1364,8 @@ $this->getApplication()->close();
         $query = $db->getQuery(true)
             ->select($db->quoteName('id'))
             ->from($db->quoteName('#__users'))
-            ->where($db->quoteName('params') . ' LIKE ' . $db->quote('%"' . self::GOOGLE_SUB_PARAM . '":"' . $googleId . '"%'));
+            // escape(..., true) neutralizes the LIKE wildcards % and _ (and backslashes) in the Google ID.
+            ->where($db->quoteName('params') . ' LIKE ' . $db->quote('%"' . self::GOOGLE_SUB_PARAM . '":"' . $db->escape($googleId, true) . '"%', false));
         $userId = (int) $db->setQuery($query)->loadResult();
         return $userId > 0 ? $this->loadUser($userId) : null;
     }
